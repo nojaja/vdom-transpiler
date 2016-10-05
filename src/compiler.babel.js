@@ -8,9 +8,11 @@ IncDom.compile = (function() {
   
   function mkAttribute(attributes){
     var attribute='[';
-    attributes.forEach(function(nodeAttribute, i) {
+    var i=0;
+    Object.keys(attributes).forEach(function(attrkey) {
       if(i > 0)attribute=attribute+ ",";
-      attribute=attribute+ `'${nodeAttribute.nodeName}',${nodeAttribute.nodeValue}`;
+      attribute=attribute+ `'${attrkey}',${attributes[attrkey]}`;
+      i++;
     });
     return attribute+']';
   }
@@ -19,6 +21,11 @@ IncDom.compile = (function() {
       nodes.forEach(function(node, i) {
         if(node.nodeName=='#text'){
           scripts.push(`text(${node.nodeTextContent}); `);
+        }else if(node.nodeName=='if'){
+          scripts.push(`if( ${node.nodeAttributes['condition']} ){`);
+          if(node.child.length>0){scripts=scripts.concat(mkscript(node.child));}
+          else{scripts.push(`text(${node.nodeTextContent}); `);}
+          scripts.push(`}`);
         }else if(voidTags.indexOf(node.nodeName)>=0){
           scripts.push(`elementVoid('${node.nodeName}', '', ${mkAttribute(node.nodeAttributes)}); `);
         }else{
@@ -47,7 +54,7 @@ IncDom.compile = (function() {
       //console.log(`function render(data) {${ methods[key].script.join('\n')} \n};`);
       
       methods[key] = new Function('data', `${ methods[key].script.join('\n')}`);
-      console.log(methods[key]);
+      //console.log(methods[key]);
     }, src);
 
     return methods;

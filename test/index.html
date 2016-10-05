@@ -1,0 +1,47 @@
+<!DOCTYPE html><html class=''>
+<head>
+<style class="cp-pen-styles"></style></head><body>
+  <div id="container"></div>
+
+<script name="test" type="IncDom/tag">
+  <x-template>
+    <input type='text' oninput={handleInput} value={ data.text } />
+    <div>message:{ data.text } </div>
+  </x-template>
+  <x-script>
+  var handleInput= function(e) {
+    data.text=e.target.value;
+    patch(container, function() {
+      render(data);
+    });
+  };
+  </x-script>
+</script>
+<script src='http://codepen.io/nojaja/pen/KgywWY.js'></script>
+<script src='http://codepen.io/nojaja/pen/JROmOp.js'></script>
+<script src='https://ajax.googleapis.com/ajax/libs/incrementaldom/0.5.1/incremental-dom-min.js'></script>
+
+<script>
+'use strict';
+var existingContainer = document.getElementById('container');
+var container = document.createElement('div');
+existingContainer.parentNode.replaceChild(container, existingContainer);
+var elementVoid = IncrementalDOM.elementVoid;
+var elementOpen = IncrementalDOM.elementOpen;
+var elementClose = IncrementalDOM.elementClose;
+var text = IncrementalDOM.text;
+var patch = IncrementalDOM.patch;
+var data = {
+    text: 'Hello World!',
+    someCondition: true
+};
+var methods;
+IncDom.parse(function (tags) {
+    methods = IncDom.compile(tags);
+});
+var render = methods['test'];
+patch(container, function () {
+    render(data);
+});
+</script>
+</body></html>

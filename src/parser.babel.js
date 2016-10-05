@@ -96,7 +96,16 @@ IncDom.parse = (function() {
       src = src.replace(/\uFFF1/g, '}');
       return src;
     }
-
+/*
+    function extparse(nodejson,element) {
+        if (/^\{#([^\s]+)/i.test(element.textContent.trim())) {
+          element.textContent.trim().replace(/^\{#([^\s]+)\s*([^\}]+)\s*\}$/i, function(_, tag,expr) {
+            nodejson.nodeName= "#"+tag.toLowerCase();
+            nodejson.nodeTextContent = expr.trim();
+          });
+        }
+    }
+    */
     function tagparse(dom) {
       var node = dom.childNodes;
       var ret = [];
@@ -104,24 +113,21 @@ IncDom.parse = (function() {
         var element = node[i];
         var nodejson = {
           nodeName: '',
-          nodeAttributes: [],
+          nodeAttributes: {},
           nodeTextContent: '',
           child: []
         };
         nodejson.nodeName = (element.tagName) ? element.tagName.toLowerCase() : element.nodeName;
-
         nodejson.nodeTextContent = exprParse(element.textContent || '');
-
+        extparse(nodejson,element);
         //console.log(element);
         //console.log(nodejson.nodeName);
         //console.log(nodejson.nodeTextContent);
         if (element.attributes) {
           for (var j = 0; j < element.attributes.length; j++) {
-            var nodeAttribute = {
-              nodeName: element.attributes[j].nodeName,
-              nodeValue: exprParse(element.attributes[j].nodeValue)
-            }
-            nodejson.nodeAttributes.push(nodeAttribute);
+            var attrkey =  element.attributes[j].nodeName;
+            var attrValue= exprParse(element.attributes[j].nodeValue);
+            nodejson.nodeAttributes[attrkey]=attrValue;
           }
         }
         if (element.childElementCount && element.childElementCount > 0) {
@@ -132,15 +138,25 @@ IncDom.parse = (function() {
       return ret;
     }
 
+    function extparse(src) {
+        var ret=src+'';
+        ret=ret.replace(/\{#([^\s]+)\s*([^\}]+)\s*\}/ig, function(_, tag,expr) {
+            return `<${tag} condition='\{${expr}\}'>`;
+          });
+        ret=ret.replace(/\{\/([^\s]+)\s*\}/ig, function(_, tag,expr) {
+            return `</${tag}>`;
+        });
+      return ret;
+    }
     function parseTag(src, tagName, opts, url) {
       var buf = document.createElement('div'); // ダミーの要素を生成して
 
+      src = extparse(src);
       src = src.replace(/\s+/g, ' ');
       src = src.replace(/=(\{[^\}]+\})([\s\>])/g, '="$1"$2');
       //src = src.replace(/'/g, "\\'");
       src = src.replace(/\\[{}]/g, '\\$&');
       src = src.replace(/> </g, '><');
-
       //console.log(src);
       buf.innerHTML = src; // 貼りつけた内容を突っ込む
       var template = buf.getElementsByTagName('x-template')[0];
